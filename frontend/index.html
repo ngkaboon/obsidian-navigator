@@ -1005,6 +1005,9 @@
         gap: 8px;
         flex-shrink: 0;
         background: var(--panel);
+        position: sticky;
+        bottom: 0;
+        align-items: flex-end;
       }
 
       #m-chat-input {
@@ -1014,7 +1017,7 @@
         border-radius: var(--radius);
         color: var(--text);
         padding: 8px 12px;
-        font-size: 14px;
+        font-size: 16px; /* 16px prevents iOS auto-zoom on focus */
         resize: none;
         outline: none;
         font-family: inherit;
@@ -1035,6 +1038,9 @@
         font-size: 16px;
         cursor: pointer;
         flex-shrink: 0;
+        min-width: 44px;
+        height: 38px;
+        align-self: flex-end;
         transition: opacity 0.15s;
         -webkit-tap-highlight-color: transparent;
       }
