@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mobile Layout Options</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:         #1a1a1a;
+      --panel:      #242424;
+      --panel-alt:  #2c2c2c;
+      --border:     #333;
+      --text:       #e0e0e0;
+      --text-muted: #888;
+      --text-dim:   #555;
+      --accent:     #7c6af7;
+      --accent-dim: rgba(124,106,247,0.15);
+      --tag-bg:     rgba(124,106,247,0.18);
+      --radius:     8px;
+    }
+
+    body {
+      background: #111;
+      color: var(--text);
+      font-family: system-ui, -apple-system, sans-serif;
+      font-size: 14px;
+      min-height: 100vh;
+      padding: 24px 16px 40px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .subtitle {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 13px;
+      margin-bottom: 32px;
+    }
+
+    /* ── Option selector ── */
+    .tabs {
+      display: flex;
+      gap: 8px;
+      justify-content: center;
+      margin-bottom: 28px;
+      flex-wrap: wrap;
+    }
+    .tab-btn {
+      padding: 8px 20px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--panel);
+      color: var(--text-muted);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .tab-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    /* ── Phone frame ── */
+    .option { display: none; flex-direction: column; align-items: center; gap: 20px; }
+    .option.active { display: flex; }
+
+    .option-desc {
+      max-width: 360px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 13px;
+      line-height: 1.6;
+    }
+    .option-desc strong { color: var(--text); }
+
+    .phone {
+      width: 320px;
+      height: 620px;
+      border: 2px solid #444;
+      border-radius: 36px;
+      overflow: hidden;
+      background: var(--bg);
+      position: relative;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+      flex-shrink: 0;
+    }
+    /* notch */
+    .phone::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 100px; height: 28px;
+      background: #111;
+      border-radius: 0 0 18px 18px;
+      z-index: 10;
+    }
+
+    .phone-inner {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding-top: 30px;
+      overflow: hidden;
+    }
+
+    /* ── Shared chrome ── */
+    .p-header {
+      height: 48px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      padding: 0 16px;
+      gap: 10px;
+      flex-shrink: 0;
+    }
+    .p-header-title {
+      font-size: 15px;
+      font-weight: 600;
+      flex: 1;
+    }
+    .p-icon-btn {
+      width: 30px; height: 30px;
+      border-radius: 6px;
+      background: var(--panel-alt);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+      color: var(--text-muted);
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .p-content {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* ── Option A: Bottom tab bar ── */
+    .a-body {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+    }
+    .a-view {
+      flex: 1;
+      overflow: hidden;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .a-tab-bar {
+      height: 56px;
+      background: var(--panel);
+      border-top: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .a-tab {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      font-size: 10px;
+      color: var(--text-dim);
+      cursor: pointer;
+    }
+    .a-tab.active { color: var(--accent); }
+    .a-tab-icon { font-size: 18px; }
+
+    /* browse view content */
+    .note-card {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px;
+    }
+    .note-card-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+    .note-card-excerpt { font-size: 11px; color: var(--text-muted); line-height: 1.5; }
+    .note-card-tags { display: flex; gap: 4px; margin-top: 8px; flex-wrap: wrap; }
+    .tag { background: var(--tag-bg); color: var(--accent); border-radius: 20px; padding: 1px 7px; font-size: 10px; }
+
+    .section-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-dim);
+      margin-bottom: 2px;
+    }
+
+    /* search view */
+    .p-search-bar {
+      background: var(--panel-alt);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 9px 12px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+    .search-result-row {
+      display: flex;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+      gap: 10px;
+      cursor: pointer;
+    }
+    .search-result-row:last-child { border-bottom: none; }
+    .sr-icon { font-size: 16px; }
+    .sr-title { font-size: 13px; flex: 1; }
+    .sr-score { font-size: 10px; color: var(--text-dim); }
+
+    /* chat view */
+    .chat-bubble {
+      border-radius: 12px;
+      padding: 10px 13px;
+      font-size: 12px;
+      line-height: 1.55;
+      max-width: 85%;
+    }
+    .chat-bubble.user {
+      background: rgba(124,106,247,0.18);
+      border: 1px solid rgba(124,106,247,0.25);
+      align-self: flex-end;
+      color: var(--text);
+    }
+    .chat-bubble.ai {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      align-self: flex-start;
+      color: var(--text);
+    }
+    .chat-bubbles {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex: 1;
+      overflow: hidden;
+    }
+    .source-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: var(--panel-alt);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 3px 9px;
+      font-size: 10px;
+      color: var(--accent);
+      margin-top: 6px;
+    }
+    .chat-input-row {
+      display: flex;
+      gap: 8px;
+      padding: 10px 16px 12px;
+      border-top: 1px solid var(--border);
+      background: var(--panel);
+      flex-shrink: 0;
+    }
+    .chat-input {
+      flex: 1;
+      background: var(--panel-alt);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 8px 14px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .chat-send {
+      width: 34px; height: 34px;
+      background: var(--accent);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    /* ── Option B: Chat-first + drawer ── */
+    .b-body { height: 100%; display: flex; flex-direction: column; }
+    .b-drawer-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 20;
+      display: flex;
+    }
+    .b-drawer {
+      width: 220px;
+      height: 100%;
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      padding: 16px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .drawer-section-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: var(--text-dim);
+      padding: 10px 16px 4px;
+    }
+    .drawer-item {
+      padding: 9px 16px;
+      font-size: 13px;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .drawer-item:hover { background: var(--panel-alt); color: var(--text); }
+    .drawer-item.active { color: var(--accent); background: var(--accent-dim); }
+
+    /* ── Option C: Search-first + FAB ── */
+    .c-body { height: 100%; display: flex; flex-direction: column; }
+    .c-search-header {
+      padding: 12px 14px;
+      background: var(--panel);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .c-search-input {
+      width: 100%;
+      background: var(--panel-alt);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 9px 16px;
+      font-size: 13px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .c-content {
+      flex: 1;
+      overflow: hidden;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      position: relative;
+    }
+    .fab {
+      position: absolute;
+      bottom: 16px;
+      right: 16px;
+      width: 48px; height: 48px;
+      border-radius: 50%;
+      background: var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+      box-shadow: 0 4px 16px rgba(124,106,247,0.4);
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Mobile Layout Options</h1>
+  <p class="subtitle">Tap each option to preview the layout</p>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="showOption('a')">A — Tab Bar</button>
+    <button class="tab-btn" onclick="showOption('b')">B — Chat + Drawer</button>
+    <button class="tab-btn" onclick="showOption('c')">C — Search + FAB</button>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════
+       OPTION A — Bottom tab bar
+  ════════════════════════════════════════════════════ -->
+  <div class="option active" id="opt-a">
+    <p class="option-desc">
+      <strong>Three tabs at the bottom.</strong> Browse, Search, and Chat each get their own full-screen view.
+      Most native iOS-like feel. Tap the tabs below to see each view.
+    </p>
+
+    <div class="phone">
+      <div class="phone-inner">
+        <div class="p-header">
+          <span class="p-header-title">🧠 Second Brain</span>
+          <span class="p-icon-btn">⚙</span>
+        </div>
+
+        <div class="p-content">
+          <div class="a-body">
+
+            <!-- Browse view -->
+            <div class="a-view" id="a-browse">
+              <div class="section-label">Recent Notes</div>
+              <div class="note-card">
+                <div class="note-card-title">Zettelkasten Method</div>
+                <div class="note-card-excerpt">A note-taking system that focuses on linking ideas rather than organising by topic…</div>
+                <div class="note-card-tags"><span class="tag">productivity</span><span class="tag">notes</span></div>
+              </div>
+              <div class="note-card">
+                <div class="note-card-title">Deep Work</div>
+                <div class="note-card-excerpt">Cal Newport's framework for producing high-quality work by minimising distraction…</div>
+                <div class="note-card-tags"><span class="tag">focus</span><span class="tag">books</span></div>
+              </div>
+              <div class="note-card">
+                <div class="note-card-title">Second Brain Setup</div>
+                <div class="note-card-excerpt">Notes on building a PKM system using Obsidian and the PARA method…</div>
+                <div class="note-card-tags"><span class="tag">obsidian</span></div>
+              </div>
+            </div>
+
+            <!-- Search view -->
+            <div class="a-view" id="a-search" style="display:none;">
+              <div class="p-search-bar">🔍  Search notes…</div>
+              <div style="margin-top:4px;">
+                <div class="search-result-row"><span class="sr-icon">📄</span><span class="sr-title">Zettelkasten Method</span><span class="sr-score">98%</span></div>
+                <div class="search-result-row"><span class="sr-icon">📄</span><span class="sr-title">Atomic Notes</span><span class="sr-score">87%</span></div>
+                <div class="search-result-row"><span class="sr-icon">📄</span><span class="sr-title">Linking Your Thinking</span><span class="sr-score">81%</span></div>
+                <div class="search-result-row"><span class="sr-icon">📄</span><span class="sr-title">PKM Systems Compared</span><span class="sr-score">74%</span></div>
+                <div class="search-result-row"><span class="sr-icon">📄</span><span class="sr-title">Obsidian Plugins</span><span class="sr-score">69%</span></div>
+              </div>
+            </div>
+
+            <!-- Chat view -->
+            <div class="a-view" id="a-chat" style="display:none; padding-bottom:0;">
+              <div class="chat-bubbles">
+                <div class="chat-bubble user">What do my notes say about deep focus?</div>
+                <div class="chat-bubble ai">
+                  Your notes connect deep focus to Cal Newport's <em>Deep Work</em> framework — protecting uninterrupted time blocks…
+                  <div><span class="source-chip">📄 Deep Work</span> <span class="source-chip">📄 Flow State</span></div>
+                </div>
+              </div>
+              <div class="chat-input-row">
+                <div class="chat-input">Ask your notes…</div>
+                <div class="chat-send">↑</div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="a-tab-bar">
+          <div class="a-tab active" id="tab-browse" onclick="aSwitch('browse')">
+            <span class="a-tab-icon">📚</span>Browse
+          </div>
+          <div class="a-tab" id="tab-search" onclick="aSwitch('search')">
+            <span class="a-tab-icon">🔍</span>Search
+          </div>
+          <div class="a-tab" id="tab-chat" onclick="aSwitch('chat')">
+            <span class="a-tab-icon">💬</span>Chat
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════
+       OPTION B — Chat-first + slide-in drawer
+  ════════════════════════════════════════════════════ -->
+  <div class="option" id="opt-b">
+    <p class="option-desc">
+      <strong>Chat is the home screen.</strong> Tap the ☰ menu to slide open a drawer with your file tree and recent notes.
+      Best if querying your notes is your main use.
+    </p>
+
+    <div class="phone">
+      <div class="phone-inner">
+        <div class="p-header">
+          <span class="p-icon-btn" onclick="bToggleDrawer()" style="cursor:pointer;">☰</span>
+          <span class="p-header-title">Second Brain</span>
+          <span class="p-icon-btn">⚙</span>
+        </div>
+
+        <div class="p-content">
+          <div class="b-body">
+            <div style="flex:1; display:flex; flex-direction:column; overflow:hidden;">
+              <div style="flex:1; overflow:hidden; padding:14px; display:flex; flex-direction:column; gap:8px;">
+                <div class="chat-bubbles">
+                  <div class="chat-bubble user">Summarise my notes on productivity</div>
+                  <div class="chat-bubble ai">
+                    Across your notes, productivity clusters around three ideas: deep focus, system design, and energy management…
+                    <div><span class="source-chip">📄 Deep Work</span> <span class="source-chip">📄 GTD</span></div>
+                  </div>
+                  <div class="chat-bubble user">What about morning routines?</div>
+                  <div style="display:flex;gap:4px;padding:10px 13px;background:var(--panel);border:1px solid var(--border);border-radius:12px;max-width:85%;align-self:flex-start;">
+                    <span style="width:6px;height:6px;border-radius:50%;background:var(--text-muted);animation:b 1.2s infinite ease-in-out;display:inline-block;"></span>
+                    <span style="width:6px;height:6px;border-radius:50%;background:var(--text-muted);animation:b 1.2s .2s infinite ease-in-out;display:inline-block;"></span>
+                    <span style="width:6px;height:6px;border-radius:50%;background:var(--text-muted);animation:b 1.2s .4s infinite ease-in-out;display:inline-block;"></span>
+                  </div>
+                </div>
+              </div>
+              <div class="chat-input-row">
+                <div class="chat-input">Ask your notes…</div>
+                <div class="chat-send">↑</div>
+              </div>
+            </div>
+
+            <!-- Drawer overlay -->
+            <div class="b-drawer-overlay" id="b-drawer" style="display:none;" onclick="bCloseDrawer(event)">
+              <div class="b-drawer" onclick="event.stopPropagation()">
+                <div class="drawer-section-label">Recent</div>
+                <div class="drawer-item active">📄 Zettelkasten Method</div>
+                <div class="drawer-item">📄 Deep Work</div>
+                <div class="drawer-item">📄 Morning Routine</div>
+                <div class="drawer-section-label">Browse</div>
+                <div class="drawer-item">📁 Projects</div>
+                <div class="drawer-item">📁 Areas</div>
+                <div class="drawer-item">📁 Resources</div>
+                <div class="drawer-item">📁 Archive</div>
+                <div class="drawer-section-label">Tags</div>
+                <div style="padding: 4px 16px; display:flex; flex-wrap:wrap; gap:5px;">
+                  <span class="tag">focus</span><span class="tag">books</span><span class="tag">productivity</span><span class="tag">obsidian</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════
+       OPTION C — Search-first + floating chat button
+  ════════════════════════════════════════════════════ -->
+  <div class="option" id="opt-c">
+    <p class="option-desc">
+      <strong>Search bar is front and centre.</strong> Recent notes show as cards. Tap any card to read it.
+      Chat lives as a floating button — tap it to slide up a chat sheet.
+    </p>
+
+    <div class="phone">
+      <div class="phone-inner">
+        <div class="c-body">
+          <div class="c-search-header">
+            <div class="c-search-input">🔍 <span>Search your notes…</span></div>
+          </div>
+
+          <div class="c-content">
+            <div class="section-label">Recent Notes</div>
+            <div class="note-card" style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:22px;">📄</span>
+              <div>
+                <div class="note-card-title">Zettelkasten Method</div>
+                <div class="note-card-tags"><span class="tag">productivity</span></div>
+              </div>
+            </div>
+            <div class="note-card" style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:22px;">📄</span>
+              <div>
+                <div class="note-card-title">Deep Work</div>
+                <div class="note-card-tags"><span class="tag">focus</span><span class="tag">books</span></div>
+              </div>
+            </div>
+            <div class="note-card" style="display:flex;align-items:center;gap:10px;">
+              <span style="font-size:22px;">📄</span>
+              <div>
+                <div class="note-card-title">Morning Routine</div>
+                <div class="note-card-tags"><span class="tag">habits</span></div>
+              </div>
+            </div>
+
+            <div class="fab" onclick="cToggleChat()" title="Chat">💬</div>
+
+            <!-- Chat sheet -->
+            <div id="c-chat-sheet" style="display:none;position:absolute;inset:0;background:var(--bg);display:none;flex-direction:column;">
+              <div style="padding:12px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;">
+                <span style="flex:1;font-weight:600;font-size:14px;">Ask your notes</span>
+                <span class="p-icon-btn" onclick="cToggleChat()" style="cursor:pointer;">✕</span>
+              </div>
+              <div style="flex:1;overflow:hidden;padding:14px;display:flex;flex-direction:column;gap:8px;">
+                <div class="chat-bubbles">
+                  <div class="chat-bubble user">What is the Zettelkasten method?</div>
+                  <div class="chat-bubble ai">
+                    Based on your notes, Zettelkasten is a slip-box system where each note captures a single idea and links to related notes…
+                    <div><span class="source-chip">📄 Zettelkasten Method</span></div>
+                  </div>
+                </div>
+              </div>
+              <div class="chat-input-row">
+                <div class="chat-input">Ask your notes…</div>
+                <div class="chat-send">↑</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    @keyframes b {
+      0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+      40%            { transform: translateY(-4px); opacity: 1; }
+    }
+  </style>
+
+  <script>
+    function showOption(id) {
+      document.querySelectorAll('.option').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+      document.getElementById('opt-' + id).classList.add('active');
+      document.querySelectorAll('.tab-btn')[{a:0,b:1,c:2}[id]].classList.add('active');
+    }
+
+    // Option A tab switching
+    function aSwitch(view) {
+      ['browse','search','chat'].forEach(v => {
+        document.getElementById('a-' + v).style.display = v === view ? 'flex' : 'none';
+        document.getElementById('tab-' + v).classList.toggle('active', v === view);
+      });
+    }
+
+    // Option B drawer
+    function bToggleDrawer() {
+      const d = document.getElementById('b-drawer');
+      d.style.display = d.style.display === 'none' ? 'flex' : 'none';
+    }
+    function bCloseDrawer(e) {
+      document.getElementById('b-drawer').style.display = 'none';
+    }
+
+    // Option C chat sheet
+    function cToggleChat() {
+      const s = document.getElementById('c-chat-sheet');
+      s.style.display = s.style.display === 'none' ? 'flex' : 'none';
+    }
+  </script>
+</body>
+</html>

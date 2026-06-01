@@ -1,0 +1,21 @@
+# Generated index — contains your vault content
+index.json
+
+# Vector database — rebuilt by refresh.sh
+chroma_db/
+
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Node
+node_modules/
+
+# Playwright
+test-results/
+playwright-report/
+
+# macOS
+.DS_Store

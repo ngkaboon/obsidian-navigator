@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+python-frontmatter
+chromadb
+sentence-transformers
+anthropic
+fuzzywuzzy
+python-levenshtein
+aiofiles
+openai

@@ -1,0 +1,16 @@
+{
+  "name": "obsidian-navigator",
+  "version": "1.0.0",
+  "description": "A local web app for navigating and querying your Obsidian vault. Browse notes with rendered markdown and clickable wikilinks, or ask natural language questions answered by your own notes via RAG + Claude.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@playwright/test": "^1.60.0"
+  }
+}
