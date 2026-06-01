@@ -92,9 +92,13 @@ The mobile UI required its own design pass. Three layout options were prototyped
 
 Playwright tests were added to make verification autonomous — the test suite spins up the server itself and covers both desktop and mobile viewports. That said, the tests are deliberately basic: they verify structure and navigation, not semantic correctness of RAG responses or edge cases in note parsing.
 
-In summary, I practised the multiple-agents at one point running as two parallel tasks for phases 2 and 3, and in YOLO mode. Then, I setup playwright tests to ensure the mobile part of enhancements can run towards goal complete (but in actual fact, it finished in one shot). Then, I experimented more about developing using HTML technique I learnt from the "How I AI" podcast. Finally, having a chat, and produce a CLAUDE.md with a prototype is an interesting way to initiate development outside Claude Code.
+In summary, I practised the multiple-agents at one point running as two parallel tasks for phases 2 and 3, and in YOLO mode. Then, I setup playwright tests to ensure the mobile part of enhancements can run towards goal complete (but in actual fact, it finished in one shot). Finally, having a chat, and produce a CLAUDE.md with a prototype is an interesting way to initiate development outside Claude Code.
 
-## experiment
+## EXPERIMENTS
+
+**HTML prototyping technique:** I experimented with developing using an HTML mockup technique I learnt from the "How I AI" podcast — building interactive static prototypes first to agree on layout and interaction before touching the real codebase. The mobile layout options and the theme toggle placement prototype in this repo came from that workflow.
+
+**Mobile-first development workflow:** I now have a workflow that uses the Claude Code tab on mobile to read GitHub issues, then prototype and develop entirely on a mobile phone. I then use the Claude Dispatch tab on mobile to issue commands by changing a command file (such as git pull, server start and stop). In this way I can develop on mobile end-to-end. Testing via mobile is still an area to work on.
 
 ## Troubleshooting
 
