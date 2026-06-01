@@ -94,6 +94,7 @@ Playwright tests were added to make verification autonomous — the test suite s
 
 In summary, I practised the multiple-agents at one point running as two parallel tasks for phases 2 and 3, and in YOLO mode. Then, I setup playwright tests to ensure the mobile part of enhancements can run towards goal complete (but in actual fact, it finished in one shot). Then, I experimented more about developing using HTML technique I learnt from the "How I AI" podcast. Finally, having a chat, and produce a CLAUDE.md with a prototype is an interesting way to initiate development outside Claude Code.
 
+## experiment
 
 ## Troubleshooting
 
