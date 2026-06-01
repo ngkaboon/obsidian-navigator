@@ -66,6 +66,20 @@ stop_server() {
     log "Server stopped"
 }
 
+run_refresh() {
+    log "REFRESH requested — running refresh.sh"
+    local output
+    output=$(cd "$DIR" && bash refresh.sh 2>&1)
+    local exit_code=$?
+    if (( exit_code == 0 )); then
+        log "refresh.sh succeeded"
+        echo "success: $output" > "$RESULT_FILE"
+    else
+        log "refresh.sh failed (exit $exit_code)"
+        echo "error: $output" > "$RESULT_FILE"
+    fi
+}
+
 git_pull() {
     log "PULL requested — running git pull in $DIR"
     local output
@@ -106,6 +120,10 @@ while true; do
             ;;
         pull)
             git_pull
+            echo "" > "$CMD_FILE"
+            ;;
+        refresh)
+            run_refresh
             echo "" > "$CMD_FILE"
             ;;
     esac
