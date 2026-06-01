@@ -94,7 +94,7 @@ Playwright tests were added to make verification autonomous — the test suite s
 
 In summary, I practised the multiple-agents at one point running as two parallel tasks for phases 2 and 3, and in YOLO mode. Then, I setup playwright tests to ensure the mobile part of enhancements can run towards goal complete (but in actual fact, it finished in one shot). Finally, having a chat, and produce a CLAUDE.md with a prototype is an interesting way to initiate development outside Claude Code.
 
-## EXPERIMENTS
+## Experiments
 
 **HTML prototyping technique:** I experimented with developing using an HTML mockup technique I learnt from the "How I AI" podcast — building interactive static prototypes first to agree on layout and interaction before touching the real codebase. The mobile layout options and the theme toggle placement prototype in this repo came from that workflow.
 
