@@ -33,6 +33,22 @@
       --scrollbar-w: 6px;
     }
 
+    html.light {
+      --bg:          #f5f5f8;
+      --panel:       #ffffff;
+      --panel-alt:   #ededf2;
+      --border:      #d8d8e2;
+      --text:        #1a1a2e;
+      --text-muted:  #888899;
+      --text-dim:    #c0c0cc;
+      --accent:      #6b5ce7;
+      --accent-dim:  #e0deff;
+      --accent-glow: rgba(107,92,231,0.12);
+      --danger:      #d94f4f;
+      --success:     #3a9e4a;
+      --tag-bg:      rgba(107,92,231,0.12);
+    }
+
     html, body {
       height: 100%;
       background: var(--bg);
@@ -138,7 +154,7 @@
       margin-left: 8px;
     }
 
-    #settings-btn {
+    #settings-btn, #theme-toggle-btn {
       background: none;
       border: none;
       color: var(--text-muted);
@@ -149,7 +165,7 @@
       transition: color 0.15s, background 0.15s;
       flex-shrink: 0;
     }
-    #settings-btn:hover { color: var(--text); background: var(--panel-alt); }
+    #settings-btn:hover, #theme-toggle-btn:hover { color: var(--text); background: var(--panel-alt); }
 
     /* ---- Main content area ---- */
     #main {
@@ -818,6 +834,33 @@
       }
       #mobile-notes-view.m-hidden { display: none; }
 
+      .mobile-top-bar {
+        height: 44px;
+        background: var(--panel);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        padding: 0 14px;
+        gap: 8px;
+        flex-shrink: 0;
+      }
+      .mobile-top-bar-title {
+        flex: 1;
+        font-size: 15px;
+        font-weight: 600;
+        color: var(--text);
+      }
+      .m-theme-btn {
+        background: none;
+        border: none;
+        font-size: 20px;
+        cursor: pointer;
+        padding: 4px;
+        border-radius: var(--radius);
+        -webkit-tap-highlight-color: transparent;
+        line-height: 1;
+      }
+
       .mobile-search-wrap {
         padding: 10px 14px;
         background: var(--panel);
@@ -963,7 +1006,7 @@
       #mobile-chat-view.m-active { display: flex; }
 
       #m-chat-header {
-        padding: 12px 16px 10px;
+        padding: 8px 14px;
         font-size: 11px;
         font-weight: 600;
         text-transform: uppercase;
@@ -972,7 +1015,11 @@
         border-bottom: 1px solid var(--border);
         flex-shrink: 0;
         background: var(--panel);
+        display: flex;
+        align-items: center;
+        min-height: 44px;
       }
+      #m-chat-header span { flex: 1; }
 
       #m-chat-messages {
         flex: 1;
@@ -1068,6 +1115,7 @@
       <div id="search-dropdown"></div>
     </div>
 
+    <button id="theme-toggle-btn" title="Toggle theme">☀️</button>
     <button id="settings-btn" title="Settings">⚙</button>
   </header>
 
@@ -1172,6 +1220,10 @@
 
     <!-- Notes view: search bar + cards + slide-in detail -->
     <div id="mobile-notes-view">
+      <div class="mobile-top-bar">
+        <span class="mobile-top-bar-title">📚 Notes</span>
+        <button class="m-theme-btn" id="m-theme-btn" title="Toggle theme">☀️</button>
+      </div>
       <div class="mobile-search-wrap">
         <input
           id="mobile-search-input"
@@ -1196,7 +1248,10 @@
 
     <!-- Chat view -->
     <div id="mobile-chat-view">
-      <div id="m-chat-header">Ask your notes</div>
+      <div id="m-chat-header">
+        <span>Ask your notes</span>
+        <button class="m-theme-btn" id="m-chat-theme-btn" title="Toggle theme">☀️</button>
+      </div>
       <div id="m-chat-messages">
         <div id="m-chat-empty">
           <div class="icon">💬</div>
@@ -1270,7 +1325,29 @@
 ============================================================================= */
 const API = '';
 const LS_API_KEY = 'obsidian_api_key';
+const LS_THEME    = 'obsidian_theme';
 const WIKILINK_RE = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g;
+
+/* =============================================================================
+   Theme
+============================================================================= */
+function applyTheme(theme) {
+  document.documentElement.classList.toggle('light', theme === 'light');
+  const icon = theme === 'light' ? '🌙' : '☀️';
+  ['theme-toggle-btn', 'm-theme-btn', 'm-chat-theme-btn'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = icon;
+  });
+}
+
+function toggleTheme() {
+  const next = document.documentElement.classList.contains('light') ? 'dark' : 'light';
+  localStorage.setItem(LS_THEME, next);
+  applyTheme(next);
+}
+
+// Apply saved theme immediately (before DOM is ready) to avoid flash
+applyTheme(localStorage.getItem(LS_THEME) || 'dark');
 
 const state = {
   notes: [],          // [{slug, title, tags, path?, mtime?}]
@@ -2215,6 +2292,12 @@ async function init() {
   initSearch();
   initChat();
   initSettings();
+
+  // Wire all theme toggle buttons
+  ['theme-toggle-btn', 'm-theme-btn', 'm-chat-theme-btn'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('click', toggleTheme);
+  });
 
   try {
     const notes = await loadNotes();
