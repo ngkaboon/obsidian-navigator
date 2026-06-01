@@ -19,3 +19,14 @@ playwright-report/
 
 # macOS
 .DS_Store
+
+# Server runtime files
+server.pid
+server.log
+server-error.log
+nohup.out
+
+# Daemon control files
+.cmd
+.status
+daemon.log
