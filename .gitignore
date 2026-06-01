@@ -29,4 +29,5 @@ nohup.out
 # Daemon control files
 .cmd
 .status
+.result
 daemon.log

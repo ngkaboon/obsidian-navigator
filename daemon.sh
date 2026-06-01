@@ -6,6 +6,7 @@
 DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CMD_FILE="$DIR/.cmd"
 STATUS_FILE="$DIR/.status"
+RESULT_FILE="$DIR/.result"
 PID_FILE="$DIR/server.pid"
 LOG_FILE="$DIR/daemon.log"
 
@@ -65,8 +66,23 @@ stop_server() {
     log "Server stopped"
 }
 
+git_pull() {
+    log "PULL requested — running git pull in $DIR"
+    local output
+    output=$(cd "$DIR" && git pull 2>&1)
+    local exit_code=$?
+    if (( exit_code == 0 )); then
+        log "git pull succeeded"
+        echo "success: $output" > "$RESULT_FILE"
+    else
+        log "git pull failed (exit $exit_code)"
+        echo "error: $output" > "$RESULT_FILE"
+    fi
+}
+
 # Initialise files on startup
 touch "$CMD_FILE"
+touch "$RESULT_FILE"
 if is_running; then
     echo "running" > "$STATUS_FILE"
     log "Daemon started — server already running (PID $(cat "$PID_FILE"))"
@@ -86,6 +102,10 @@ while true; do
             ;;
         stop)
             stop_server
+            echo "" > "$CMD_FILE"
+            ;;
+        pull)
+            git_pull
             echo "" > "$CMD_FILE"
             ;;
     esac
