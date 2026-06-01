@@ -76,6 +76,25 @@ Add it as a home screen icon in Safari: Share → Add to Home Screen.
 | `chroma_db/` | Persisted vector index (auto-created, gitignored) |
 | `index.json` | Flat note index (auto-created by indexer, gitignored) |
 
+## How This Was Built
+
+This project started with a conversation on the Claude web — before a single line of code existed. What began as a broader itch to explore LLM coding (self-harnessing multi-agent setups, coding from a phone) narrowed, over the course of one chat, into something concrete: a local web app to navigate my Obsidian second brain through both an LLM query interface and a Wikipedia-style browsing UI.
+
+The idea was sketched out in that chat, then refined through a few rounds of questions — how the vault is accessed (local + git), what the first version should prioritize (query and browse, equally), whether a backend was acceptable (yes). Rather than jump straight to code, the goal became a dev plan I could hand to an autonomous agent. Claude was asked to generate a CLAUDE.md spec file that would serve as the blueprint for the entire build.
+
+An interactive artifact was built to demonstrate the pattern — an Architect → Coder → Reviewer pipeline running across four phases, with Claude calling Claude via the API. I did not exactly execute on it. The real work belonged in Claude Code, where agents actually write files, run them, and fix what breaks. The CLAUDE.md was the bridge between the two.
+
+As I could not create a docker container to call my Claude Pro account, development was driven through Claude Code YOLO style using the multi-agent, phased approach the spec laid out. The spec drove the backend (FastAPI, RAG pipeline, ChromaDB), then the desktop frontend, then deployment.
+
+The deployment path itself was exploratory. Cloudflare Tunnel was the first plan but stalled at the zone/domain requirement. Tailscale Serve turned out to be the right fit — already installed, private by default, no domain needed.
+
+The mobile UI required its own design pass. Three layout options were prototyped as interactive HTML mockups for comparison (also in this repo), then a hybrid was chosen: Option C's search-first card layout with Option A's two-tab bar. The final implementation is a single responsive file — desktop gets the three-panel layout, mobile gets the tab-driven hybrid, all from one index.html.
+
+Playwright tests were added to make verification autonomous — the test suite spins up the server itself and covers both desktop and mobile viewports. That said, the tests are deliberately basic: they verify structure and navigation, not semantic correctness of RAG responses or edge cases in note parsing.
+
+In summary, I practised the multiple-agents at one point running as two parallel tasks for phases 2 and 3, and in YOLO mode. Then, I setup playwright tests to ensure the mobile part of enhancements can run towards goal complete (but in actual fact, it finished in one shot). Then, I experimented more about developing using HTML technique I learnt from the "How I AI" podcast. Finally, having a chat, and produce a CLAUDE.md with a prototype is an interesting way to initiate development outside Claude Code.
+
+
 ## Troubleshooting
 
 **Port 8000 already in use**
