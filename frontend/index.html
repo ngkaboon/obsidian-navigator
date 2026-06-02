@@ -31,6 +31,7 @@
       --sidebar-w:   250px;
       --chat-w:      320px;
       --scrollbar-w: 6px;
+      --font-scale:  1;
     }
 
     html.light {
@@ -54,7 +55,7 @@
       background: var(--bg);
       color: var(--text);
       font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
-      font-size: 14px;
+      font-size: calc(14px * var(--font-scale));
       line-height: 1.6;
       overflow: hidden;
     }
@@ -194,7 +195,7 @@
       align-items: center;
       justify-content: space-between;
       padding: 10px 14px 8px;
-      font-size: 11px;
+      font-size: calc(11px * var(--font-scale));
       font-weight: 600;
       text-transform: uppercase;
       letter-spacing: 0.8px;
@@ -230,7 +231,7 @@
     .note-item {
       padding: 5px 14px 5px 28px;
       cursor: pointer;
-      font-size: 13px;
+      font-size: calc(13px * var(--font-scale));
       color: var(--text-muted);
       white-space: nowrap;
       overflow: hidden;
@@ -329,7 +330,7 @@
 
     #note-header { margin-bottom: 20px; }
     #note-title {
-      font-size: 26px;
+      font-size: calc(26px * var(--font-scale));
       font-weight: 700;
       line-height: 1.2;
       color: var(--text);
@@ -527,7 +528,7 @@
       background: var(--panel-alt);
       border-radius: var(--radius);
       padding: 9px 12px;
-      font-size: 13px;
+      font-size: calc(13px * var(--font-scale));
       line-height: 1.55;
     }
     .chat-msg.user .chat-msg-body {
@@ -971,7 +972,7 @@
         -webkit-overflow-scrolling: touch;
         line-height: 1.75;
         color: var(--text);
-        font-size: 14px;
+        font-size: calc(14px * var(--font-scale));
       }
       #mobile-detail-body h1,#mobile-detail-body h2,#mobile-detail-body h3,
       #mobile-detail-body h4,#mobile-detail-body h5,#mobile-detail-body h6 {
@@ -1303,6 +1304,16 @@
     </div>
 
     <div class="setting-group">
+      <label class="setting-label" for="font-size-slider">Font Size</label>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:11px;opacity:0.6">A</span>
+        <input type="range" id="font-size-slider" min="0.8" max="1.5" step="0.05" value="1" style="flex:1">
+        <span style="font-size:17px;opacity:0.6">A</span>
+      </div>
+      <div id="font-size-label" style="font-size:11px;opacity:0.5;text-align:center;margin-top:4px;">100%</div>
+    </div>
+
+    <div class="setting-group">
       <span class="setting-label">Vault Path</span>
       <div id="vault-path-display" class="setting-info">Loading…</div>
     </div>
@@ -1324,8 +1335,9 @@
    Constants & State
 ============================================================================= */
 const API = '';
-const LS_API_KEY = 'obsidian_api_key';
-const LS_THEME    = 'obsidian_theme';
+const LS_API_KEY    = 'obsidian_api_key';
+const LS_THEME      = 'obsidian_theme';
+const LS_FONT_SCALE = 'obsidian_font_scale';
 const WIKILINK_RE = /\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g;
 
 /* =============================================================================
@@ -1348,6 +1360,18 @@ function toggleTheme() {
 
 // Apply saved theme immediately (before DOM is ready) to avoid flash
 applyTheme(localStorage.getItem(LS_THEME) || 'dark');
+
+function applyFontScale(scale) {
+  document.documentElement.style.setProperty('--font-scale', scale);
+  const pct = Math.round(scale * 100);
+  const lbl = document.getElementById('font-size-label');
+  if (lbl) lbl.textContent = pct + '%';
+  const slider = document.getElementById('font-size-slider');
+  if (slider) slider.value = scale;
+}
+
+// Apply saved font scale immediately to avoid flash
+applyFontScale(parseFloat(localStorage.getItem(LS_FONT_SCALE)) || 1);
 
 const state = {
   notes: [],          // [{slug, title, tags, path?, mtime?}]
@@ -2016,9 +2040,13 @@ function initSettings() {
   const saveBtn = document.getElementById('modal-save');
   const apiInput = document.getElementById('api-key-input');
 
+  const fontSlider = document.getElementById('font-size-slider');
+  fontSlider.addEventListener('input', () => applyFontScale(parseFloat(fontSlider.value)));
+
   btn.addEventListener('click', async () => {
-    // Populate current value
+    // Populate current values
     apiInput.value = localStorage.getItem(LS_API_KEY) || '';
+    applyFontScale(parseFloat(localStorage.getItem(LS_FONT_SCALE)) || 1);
 
     // Fetch vault path from health
     try {
@@ -2054,6 +2082,7 @@ function initSettings() {
     } else {
       localStorage.removeItem(LS_API_KEY);
     }
+    localStorage.setItem(LS_FONT_SCALE, fontSlider.value);
     overlay.classList.remove('visible');
   });
 
