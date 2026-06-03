@@ -309,7 +309,7 @@ def rag_query(request: QueryRequest) -> dict:
                 api_key=api_key,
             )
             response = client_or.chat.completions.create(
-                model="anthropic/claude-haiku-4-5",
+                model="deepseek/deepseek-chat",
                 max_tokens=1024,
                 messages=[
                     {"role": "system", "content": _RAG_SYSTEM_PROMPT},
@@ -331,6 +331,9 @@ def rag_query(request: QueryRequest) -> dict:
     except anthropic.APIError as exc:
         raise HTTPException(status_code=502, detail=f"Claude API error: {exc}")
     except Exception as exc:
+        from openai import AuthenticationError as OpenAIAuthError
+        if isinstance(exc, OpenAIAuthError):
+            raise HTTPException(status_code=401, detail="Invalid OpenRouter API key.")
         raise HTTPException(status_code=502, detail=f"LLM API error: {exc}")
 
     # Deduplicate sources (multiple chunks from the same note).

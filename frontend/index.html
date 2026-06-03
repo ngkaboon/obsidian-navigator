@@ -1294,12 +1294,12 @@
         id="api-key-input"
         class="setting-input"
         type="password"
-        placeholder="sk-ant-… or sk-or-…"
+        placeholder="sk-ant-… or sk-or-v1-…"
         autocomplete="off"
         spellcheck="false"
       />
       <div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px">
-        Get a free key at <strong>openrouter.ai</strong> — supports Claude, GPT-4, and more.
+        OpenRouter keys (<code>sk-or-…</code>) use <strong>DeepSeek V3</strong> — fast and very cheap. Get a free key at <strong>openrouter.ai</strong>.
       </div>
     </div>
 
@@ -1927,7 +1927,7 @@ async function sendChatMessage() {
   const apiKey = localStorage.getItem(LS_API_KEY);
   if (!apiKey) {
     appendChatMessage('assistant', null, null,
-      'No API key set. Click ⚙ in the header to add your Anthropic or OpenRouter API key.');
+      'No API key set. Click ⚙ in the header to add your Anthropic key (sk-ant-…) or an OpenRouter key (sk-or-…) to use DeepSeek V3.');
     return;
   }
 
