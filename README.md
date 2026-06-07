@@ -45,7 +45,7 @@ When you add, edit or delete notes in Obsidian, run:
 ./refresh.sh
 ```
 
-This re-indexes the vault and rebuilds the vector index. The server picks up changes automatically — no restart needed.
+This re-indexes the vault, rebuilds the vector index, and restarts the server.
 
 ## Mobile Access via Tailscale
 
