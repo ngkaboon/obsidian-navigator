@@ -8,11 +8,15 @@ reindex + restart the obsidian-navigator server.
 
 **Architecture:** A single new skill file, `weekly-brain-sync/SKILL.md`,
 placed alongside its three siblings in the vault's `.claude/skills/`
-directory. It contains a numbered sequence of steps that invoke the three
-existing skills by name (via the Skill tool) and then shell out to
-`refresh.sh`. No code, no tests in the pytest sense — this is a
-process-documentation deliverable, so "testing" means actually running the
-sequence once and confirming each step behaves as documented.
+directory. It contains a numbered sequence of steps that read each of the
+three existing skills' SKILL.md files and carry out their documented Task
+directly, then shell out to `refresh.sh`. (Originally planned to invoke the
+three skills by name via the Skill tool, but that tool hard-blocks any
+skill marked `disable-model-invocation: true` — confirmed during live
+testing — so the steps read-and-follow instead of invoking.) No code, no
+tests in the pytest sense — this is a process-documentation deliverable, so
+"testing" means actually running the sequence once and confirming each step
+behaves as documented.
 
 **Tech Stack:** Markdown + YAML frontmatter (skill format), bash (for the
 `cd`/`refresh.sh` step).
@@ -24,8 +28,9 @@ sequence once and confirming each step behaves as documented.
 - Vault path must be quoted in every shell reference:
   `"$HOME/Documents/Kevin Notes"` (path contains a space).
 - Stop at the first step that fails; do not proceed to later steps.
-- Invoke the three existing skills by name rather than inlining their
-  instructions (single source of truth).
+- Read each existing skill's SKILL.md and carry out its Task directly,
+  rather than inlining their instructions (single source of truth) or
+  invoking them via the Skill tool (blocked by `disable-model-invocation`).
 
 ---
 
@@ -58,7 +63,7 @@ with exactly this content:
 name: weekly-brain-sync
 description: Use when you want to run the full vault maintenance pipeline in one shot — trims LLM chat tails, reindexes raw/, updates wiki/, then reindexes and restarts the obsidian-navigator server. Use instead of running trim-llm, reindex, wiki-update, and refresh.sh separately.
 disable-model-invocation: true
-allowed-tools: Read, Glob, Grep, Edit, Write, Bash, Skill
+allowed-tools: Read, Glob, Grep, Edit, Write, Bash
 ---
 
 # Weekly Brain Sync
@@ -67,13 +72,20 @@ Runs the full vault-to-navigator maintenance pipeline end to end, in order.
 
 ## Steps
 
+`trim-llm`, `reindex`, and `wiki-update` are `disable-model-invocation:
+true`, so they cannot be called through the Skill tool — not even by name.
+Instead, read each one's SKILL.md and carry out its instructions directly.
+
 1. `cd "$HOME/Documents/Kevin Notes"`
-2. Invoke skill `trim-llm`. If it reports an error, stop and report it —
-   do not continue to step 3.
-3. Invoke skill `reindex`. If it reports an error, stop and report it —
-   do not continue to step 4.
-4. Invoke skill `wiki-update`. If it reports an error, stop and report it —
-   do not continue to step 5.
+2. Read `.claude/skills/trim-llm/SKILL.md` and carry out its Task exactly
+   as written. If it reports an error, stop and report it — do not
+   continue to step 3.
+3. Read `.claude/skills/reindex/SKILL.md` and carry out its Task exactly
+   as written. If it reports an error, stop and report it — do not
+   continue to step 4.
+4. Read `.claude/skills/wiki-update/SKILL.md` and carry out its Task
+   exactly as written. If it reports an error, stop and report it — do not
+   continue to step 5.
 5. Run the navigator refresh:
 
    ```bash

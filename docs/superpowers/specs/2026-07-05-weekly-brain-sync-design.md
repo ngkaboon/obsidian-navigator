@@ -33,7 +33,7 @@ its three siblings.
 name: weekly-brain-sync
 description: Run the full vault maintenance pipeline end to end — trim LLM chat tails, reindex raw/, update wiki/, then reindex and restart the obsidian-navigator server. Use for periodic full maintenance in one shot.
 disable-model-invocation: true
-allowed-tools: Read, Glob, Grep, Edit, Write, Bash, Skill
+allowed-tools: Read, Glob, Grep, Edit, Write, Bash
 ```
 
 `disable-model-invocation: true` matches the siblings — this only ever runs
@@ -42,19 +42,28 @@ when explicitly invoked, never auto-triggered.
 ### Sequence
 
 1. `cd "$HOME/Documents/Kevin Notes"` (quoted — path has a space)
-2. Invoke skill `trim-llm`
-3. Invoke skill `reindex`
-4. Invoke skill `wiki-update`
+2. Read `trim-llm`'s SKILL.md and carry out its Task
+3. Read `reindex`'s SKILL.md and carry out its Task
+4. Read `wiki-update`'s SKILL.md and carry out its Task
 5. `cd /Users/kevinng/codep/obsidian-navigator && ./refresh.sh`
 6. Report a combined summary: files trimmed, raw entries added, wiki pages
    created/updated, and the refresh.sh output (server restart PID).
 
 ### Composition approach
 
-The skill invokes the three existing skills by name (via the Skill tool)
-rather than inlining their instructions. This keeps one source of truth — if
-`trim-llm`'s logic changes later, `weekly-brain-sync` picks it up
-automatically without edits.
+**Correction (discovered during testing):** the original design called for
+invoking the three existing skills by name via the Skill tool. In practice
+the Skill tool refuses to run any skill with `disable-model-invocation:
+true` at all — that flag blocks explicit-by-name invocation too, not just
+auto-triggering by description match. It's a hard block enforced by the
+tool, not merely a suggestion.
+
+The corrected approach: `weekly-brain-sync`'s instructions tell the agent to
+`Read` each sibling's SKILL.md file and carry out its documented Task
+directly, rather than calling the Skill tool. This still keeps one source
+of truth (the task logic lives only in `trim-llm`/`reindex`/`wiki-update`'s
+own files — `weekly-brain-sync` doesn't duplicate it), it just changes the
+mechanism from "invoke" to "read and follow."
 
 ### Failure handling
 
