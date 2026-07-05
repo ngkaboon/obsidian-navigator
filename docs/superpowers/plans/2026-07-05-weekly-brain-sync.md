@@ -61,7 +61,7 @@ with exactly this content:
 ```markdown
 ---
 name: weekly-brain-sync
-description: Use when you want to run the full vault maintenance pipeline in one shot — trims LLM chat tails, reindexes raw/, updates wiki/, then reindexes and restarts the obsidian-navigator server. Use instead of running trim-llm, reindex, wiki-update, and refresh.sh separately.
+description: Use when you want to run the full vault maintenance pipeline in one shot — optionally trims LLM chat tails, reindexes raw/, updates wiki/, then reindexes and restarts the obsidian-navigator server. Use instead of running trim-llm, reindex, wiki-update, and refresh.sh separately.
 disable-model-invocation: true
 allowed-tools: Read, Glob, Grep, Edit, Write, Bash
 ---
@@ -77,9 +77,13 @@ true`, so they cannot be called through the Skill tool — not even by name.
 Instead, read each one's SKILL.md and carry out its instructions directly.
 
 1. `cd "$HOME/Documents/Kevin Notes"`
-2. Read `.claude/skills/trim-llm/SKILL.md` and carry out its Task exactly
-   as written. If it reports an error, stop and report it — do not
-   continue to step 3.
+2. **Trim step — skipped by default.** Only run this step if invoked with
+   the argument `trim` (e.g. `weekly-brain-sync trim`). Otherwise skip
+   straight to step 3 and note in the final report that trimming was
+   skipped (default).
+   If `trim` was passed: read `.claude/skills/trim-llm/SKILL.md` and carry
+   out its Task exactly as written. If it reports an error, stop and
+   report it — do not continue to step 3.
 3. Read `.claude/skills/reindex/SKILL.md` and carry out its Task exactly
    as written. If it reports an error, stop and report it — do not
    continue to step 4.
@@ -98,7 +102,8 @@ Instead, read each one's SKILL.md and carry out its instructions directly.
 ## Report
 
 After all steps succeed, report a combined summary covering:
-- Files trimmed by `trim-llm` (and how many lines removed each)
+- Trim step: skipped (default), or if run, files trimmed by `trim-llm`
+  (and how many lines removed each)
 - New entries added by `reindex` (file names)
 - Wiki pages created/updated by `wiki-update` (titles + one-line reason
   each)

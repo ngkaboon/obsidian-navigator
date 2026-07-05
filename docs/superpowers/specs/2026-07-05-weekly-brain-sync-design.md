@@ -31,7 +31,7 @@ its three siblings.
 
 ```yaml
 name: weekly-brain-sync
-description: Run the full vault maintenance pipeline end to end — trim LLM chat tails, reindex raw/, update wiki/, then reindex and restart the obsidian-navigator server. Use for periodic full maintenance in one shot.
+description: Run the full vault maintenance pipeline end to end — optionally trim LLM chat tails, reindex raw/, update wiki/, then reindex and restart the obsidian-navigator server. Use for periodic full maintenance in one shot.
 disable-model-invocation: true
 allowed-tools: Read, Glob, Grep, Edit, Write, Bash
 ```
@@ -42,12 +42,16 @@ when explicitly invoked, never auto-triggered.
 ### Sequence
 
 1. `cd "$HOME/Documents/Kevin Notes"` (quoted — path has a space)
-2. Read `trim-llm`'s SKILL.md and carry out its Task
+2. **Trim step, opt-in.** Skipped by default. Only runs if invoked with the
+   argument `trim` (e.g. `weekly-brain-sync trim`) — most runs have no
+   LLM-clipped notes to trim, so this avoids a no-op step by default. When
+   opted in: read `trim-llm`'s SKILL.md and carry out its Task.
 3. Read `reindex`'s SKILL.md and carry out its Task
 4. Read `wiki-update`'s SKILL.md and carry out its Task
 5. `cd /Users/kevinng/codep/obsidian-navigator && ./refresh.sh`
-6. Report a combined summary: files trimmed, raw entries added, wiki pages
-   created/updated, and the refresh.sh output (server restart PID).
+6. Report a combined summary: whether trim ran or was skipped (and if run,
+   files trimmed), raw entries added, wiki pages created/updated, and the
+   refresh.sh output (server restart PID).
 
 ### Composition approach
 
