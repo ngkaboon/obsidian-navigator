@@ -45,8 +45,33 @@ allowed-tools: Read, Glob, Grep, Edit, Bash
    `[[...]]` titles out of `raw/index.md`, `ls raw/*.md` for what actually
    exists), but reversed: titles present in the index with no matching
    file in `raw/` are stale.
-2. If the stale list is empty: report "No stale entries found" and stop.
-3. For each stale title:
+
+2. **Anomaly circuit-breaker.** Before doing anything else, sanity-check
+   the result of step 1:
+   - If `ls raw/*.md` returned zero files while `raw/index.md` has one or
+     more entries, stop immediately with no edits. Report: "raw/ scan
+     returned no files but the index has N entries — this looks like a
+     directory or scan error, not a real mass deletion. Verify you're in
+     the vault root and raw/ is populated, then re-run." (This is the
+     specific failure mode that would otherwise make every indexed title
+     look stale and wipe the whole index in one pass.)
+   - If the stale list is more than half of all entries in `raw/index.md`,
+     stop immediately with no edits. Report the stale count vs. total count
+     and ask the user to confirm this large a deletion was intentional
+     before re-running.
+   - Otherwise, continue.
+
+3. If the stale list is empty: report "No stale entries found" and stop.
+
+4. **Preview and confirm.** Before editing anything, compute the full
+   result set: for each stale title, which wiki pages (if any) cite it
+   under Sources. Present this complete list to the user — every title
+   about to be removed from `raw/index.md`, and every wiki page about to
+   have a Sources bullet removed — and wait for explicit confirmation
+   before making any edits. (Matches `trim-llm`'s existing pattern of
+   showing the user what it plans to remove before editing.)
+
+5. Once confirmed, for each stale title:
    a. **Remove its `raw/index.md` block.** Read the file, locate the exact
       `### [[Title]]` block (from the heading down to just before the next
       `### ` heading or end of file), and remove it along with one
@@ -56,20 +81,23 @@ allowed-tools: Read, Glob, Grep, Edit, Bash
       as `trim-llm`'s block removal), not a scripted regex substitution,
       because block content varies and titles may contain characters that
       are awkward to pattern-match safely in bash.
-   b. **Strip dangling wiki citations.** Grep `wiki/*.md` for a Sources
-      bullet citing the title (format: `- [[Title]] (raw/)`). For each
-      page that matches, remove just that bullet line — no other edits to
-      the page (its synthesized prose stays; only the source citation for
-      the now-deleted file goes).
+   b. **Strip dangling wiki citations.** Remove the Sources bullet
+      (`- [[Title]] (raw/)`) from each wiki page identified during the
+      preview step — no other edits to the page (its synthesized prose
+      stays; only the source citation for the now-deleted file goes).
    c. **Log it.** Append one line to `wiki/log.md`:
       `## [YYYY-MM-DD] prune | Title — removed from index; removed from
-      Sources on: Page A, Page B` (or `no wiki citations found` if step 3b
+      Sources on: Page A, Page B` (or `no wiki citations found` if step 5b
       matched nothing). This follows `wiki/log.md`'s existing append-only
       convention (it already has `ingest` and `bulk-compile` entry types;
       `prune` is a new entry type in the same log).
-4. **Report** — for each stale title pruned: confirmation it was removed
+
+6. **Report** — for each stale title pruned: confirmation it was removed
    from the index, and the list of wiki pages whose Sources bullet was
    removed (or "none cited it").
+
+If the user declines at the confirmation step, stop with no edits made and
+report that nothing was changed.
 
 ### Integration into `brain-sync`
 
@@ -83,6 +111,12 @@ required for correctness, but cleanup-before-add reads more naturally).
 
 `brain-sync`'s frontmatter description and Report section get updated to
 mention the new opt-in step, matching how `trim` is documented today.
+
+Note: because `prune` pauses for explicit confirmation before editing
+anything (see Task step 4), running `brain-sync prune` will pause
+mid-pipeline waiting on that confirmation before continuing to `reindex`.
+That's expected — it's the same interactive session, not a headless
+script.
 
 ## Out of scope
 
