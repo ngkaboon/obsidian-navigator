@@ -1,4 +1,4 @@
-# weekly-brain-sync skill — design
+# brain-sync skill — design
 
 ## Goal
 
@@ -23,14 +23,14 @@ Today these four steps are run manually, in order, as separate commands.
 
 ## Design
 
-New skill: **`weekly-brain-sync`**, placed at
-`~/Documents/Kevin Notes/.claude/skills/weekly-brain-sync/SKILL.md`, alongside
+New skill: **`brain-sync`**, placed at
+`~/Documents/Kevin Notes/.claude/skills/brain-sync/SKILL.md`, alongside
 its three siblings.
 
 ### Frontmatter
 
 ```yaml
-name: weekly-brain-sync
+name: brain-sync
 description: Run the full vault maintenance pipeline end to end — optionally trim LLM chat tails, reindex raw/, update wiki/, then reindex and restart the obsidian-navigator server. Use for periodic full maintenance in one shot.
 disable-model-invocation: true
 allowed-tools: Read, Glob, Grep, Edit, Write, Bash
@@ -43,7 +43,7 @@ when explicitly invoked, never auto-triggered.
 
 1. `cd "$HOME/Documents/Kevin Notes"` (quoted — path has a space)
 2. **Trim step, opt-in.** Skipped by default. Only runs if invoked with the
-   argument `trim` (e.g. `weekly-brain-sync trim`) — most runs have no
+   argument `trim` (e.g. `brain-sync trim`) — most runs have no
    LLM-clipped notes to trim, so this avoids a no-op step by default. When
    opted in: read `trim-llm`'s SKILL.md and carry out its Task.
 3. Read `reindex`'s SKILL.md and carry out its Task
@@ -62,11 +62,11 @@ true` at all — that flag blocks explicit-by-name invocation too, not just
 auto-triggering by description match. It's a hard block enforced by the
 tool, not merely a suggestion.
 
-The corrected approach: `weekly-brain-sync`'s instructions tell the agent to
+The corrected approach: `brain-sync`'s instructions tell the agent to
 `Read` each sibling's SKILL.md file and carry out its documented Task
 directly, rather than calling the Skill tool. This still keeps one source
 of truth (the task logic lives only in `trim-llm`/`reindex`/`wiki-update`'s
-own files — `weekly-brain-sync` doesn't duplicate it), it just changes the
+own files — `brain-sync` doesn't duplicate it), it just changes the
 mechanism from "invoke" to "read and follow."
 
 ### Failure handling

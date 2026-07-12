@@ -1,4 +1,4 @@
-# weekly-brain-sync Implementation Plan
+# brain-sync Implementation Plan
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
@@ -6,7 +6,7 @@
 end to end: trim LLM chat tails, reindex `raw/`, update `wiki/`, then
 reindex + restart the obsidian-navigator server.
 
-**Architecture:** A single new skill file, `weekly-brain-sync/SKILL.md`,
+**Architecture:** A single new skill file, `brain-sync/SKILL.md`,
 placed alongside its three siblings in the vault's `.claude/skills/`
 directory. It contains a numbered sequence of steps that read each of the
 three existing skills' SKILL.md files and carry out their documented Task
@@ -34,10 +34,10 @@ behaves as documented.
 
 ---
 
-### Task 1: Write the `weekly-brain-sync` skill file
+### Task 1: Write the `brain-sync` skill file
 
 **Files:**
-- Create: `/Users/kevinng/Documents/Kevin Notes/.claude/skills/weekly-brain-sync/SKILL.md`
+- Create: `/Users/kevinng/Documents/Kevin Notes/.claude/skills/brain-sync/SKILL.md`
 
 **Interfaces:**
 - Consumes: existing skills `trim-llm`, `reindex`, `wiki-update` (invoked by
@@ -50,23 +50,23 @@ behaves as documented.
 - [ ] **Step 1: Create the skill directory**
 
 ```bash
-mkdir -p "/Users/kevinng/Documents/Kevin Notes/.claude/skills/weekly-brain-sync"
+mkdir -p "/Users/kevinng/Documents/Kevin Notes/.claude/skills/brain-sync"
 ```
 
 - [ ] **Step 2: Write SKILL.md**
 
-Create `/Users/kevinng/Documents/Kevin Notes/.claude/skills/weekly-brain-sync/SKILL.md`
+Create `/Users/kevinng/Documents/Kevin Notes/.claude/skills/brain-sync/SKILL.md`
 with exactly this content:
 
 ```markdown
 ---
-name: weekly-brain-sync
+name: brain-sync
 description: Use when you want to run the full vault maintenance pipeline in one shot — optionally trims LLM chat tails, reindexes raw/, updates wiki/, then reindexes and restarts the obsidian-navigator server. Use instead of running trim-llm, reindex, wiki-update, and refresh.sh separately.
 disable-model-invocation: true
 allowed-tools: Read, Glob, Grep, Edit, Write, Bash
 ---
 
-# Weekly Brain Sync
+# Brain Sync
 
 Runs the full vault-to-navigator maintenance pipeline end to end, in order.
 
@@ -78,7 +78,7 @@ Instead, read each one's SKILL.md and carry out its instructions directly.
 
 1. `cd "$HOME/Documents/Kevin Notes"`
 2. **Trim step — skipped by default.** Only run this step if invoked with
-   the argument `trim` (e.g. `weekly-brain-sync trim`). Otherwise skip
+   the argument `trim` (e.g. `brain-sync trim`). Otherwise skip
    straight to step 3 and note in the final report that trimming was
    skipped (default).
    If `trim` was passed: read `.claude/skills/trim-llm/SKILL.md` and carry
@@ -116,16 +116,16 @@ instead of a summary.
 - [ ] **Step 3: Verify frontmatter and file placement**
 
 ```bash
-head -6 "/Users/kevinng/Documents/Kevin Notes/.claude/skills/weekly-brain-sync/SKILL.md"
+head -6 "/Users/kevinng/Documents/Kevin Notes/.claude/skills/brain-sync/SKILL.md"
 ls "/Users/kevinng/Documents/Kevin Notes/.claude/skills/"
 ```
 
-Expected: frontmatter matches Step 2 exactly, and `weekly-brain-sync`
+Expected: frontmatter matches Step 2 exactly, and `brain-sync`
 appears alongside `trim-llm`, `reindex`, `wiki-update` in the listing.
 
 - [ ] **Step 4: End-to-end run (the real test)**
 
-Invoke the skill for real: `Skill(skill: "weekly-brain-sync")`.
+Invoke the skill for real: `Skill(skill: "brain-sync")`.
 
 This is a live run against the real vault and real navigator server — there
 is no mock mode, since the three sub-skills and `refresh.sh` all operate on
@@ -141,7 +141,7 @@ If any step fails, fix the SKILL.md (Step 2) and re-run Step 4 from the top.
 
 ```bash
 cd "/Users/kevinng/Documents/Kevin Notes"
-git add .claude/skills/weekly-brain-sync/SKILL.md 2>/dev/null || true
+git add .claude/skills/brain-sync/SKILL.md 2>/dev/null || true
 ```
 
 Note: check first whether the vault is a git repo (`git rev-parse
@@ -158,6 +158,6 @@ this plan file live in `obsidian-navigator` and are committed separately
   (5) quoted vault path. All five are in Step 2's SKILL.md content above.
 - **No placeholders:** SKILL.md content is complete and final, not a
   sketch.
-- **Consistency:** skill name `weekly-brain-sync` matches the spec exactly;
+- **Consistency:** skill name `brain-sync` matches the spec exactly;
   sibling skill names (`trim-llm`, `reindex`, `wiki-update`) match what's on
   disk (verified during brainstorming).
