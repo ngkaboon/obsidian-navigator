@@ -107,3 +107,26 @@ test('settings modal opens on mobile', async ({ page }) => {
   await page.locator('#settings-btn').click();
   await expect(page.locator('#modal-overlay')).toBeVisible();
 });
+
+test('mobile sort toggle switches between newest and A–Z', async ({ page }) => {
+  await page.setViewportSize(MOBILE);
+  await page.goto(BASE);
+  await page.evaluate(() => localStorage.removeItem('mobileSort'));
+  await page.reload();
+  await page.waitForSelector('.mobile-note-card', { timeout: 5000 });
+
+  // Defaults to newest first, with an "Added" date on each card
+  await expect(page.locator('.m-sort-btn[data-sort="newest"]')).toHaveClass(/active/);
+  await expect(page.locator('.mobile-note-card .mnc-date').first()).toContainText('Added');
+
+  await page.locator('.m-sort-btn[data-sort="az"]').click();
+  await expect(page.locator('.m-sort-btn[data-sort="az"]')).toHaveClass(/active/);
+  const titles = await page.locator('.mobile-note-card .mnc-title').allTextContents();
+  const expected = [...titles].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
+  expect(titles).toEqual(expected);
+
+  // Choice survives a reload
+  await page.reload();
+  await page.waitForSelector('.mobile-note-card', { timeout: 5000 });
+  await expect(page.locator('.m-sort-btn[data-sort="az"]')).toHaveClass(/active/);
+});

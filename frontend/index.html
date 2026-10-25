@@ -920,6 +920,32 @@
       .mnc-title { font-size: 14px; font-weight: 600; margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
       .mnc-tags { display: flex; gap: 4px; margin-top: 6px; flex-wrap: wrap; }
       .mnc-arrow { color: var(--text-dim); font-size: 18px; align-self: center; flex-shrink: 0; }
+      .mnc-date { font-size: 11px; color: var(--text-dim); }
+
+      /* Sort toggle (Newest / A–Z) */
+      .m-list-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 2px 2px;
+      }
+      .m-list-header .m-section-label { padding: 4px 0; }
+      .m-sort-toggle {
+        display: flex;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        overflow: hidden;
+      }
+      .m-sort-btn {
+        background: none;
+        border: none;
+        color: var(--text-muted);
+        font-size: 12px;
+        padding: 5px 10px;
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .m-sort-btn.active { background: var(--accent); color: #fff; }
 
       /* Slide-in note detail */
       #mobile-note-detail {
@@ -2145,14 +2171,34 @@ function initMobileTabBar() {
    Mobile note cards
 ============================================================================= */
 
+// Mobile list sort order: 'newest' (by date added) or 'az'. Remembered per device.
+function getMobileSort() {
+  try { return localStorage.getItem('mobileSort') === 'az' ? 'az' : 'newest'; }
+  catch { return 'newest'; }
+}
+
+function setMobileSort(mode) {
+  try { localStorage.setItem('mobileSort', mode); } catch { /* storage unavailable */ }
+}
+
+function formatAddedDate(ts) {
+  if (!ts) return '';
+  const d = new Date(ts * 1000);
+  const opts = { month: 'short', day: 'numeric' };
+  if (d.getFullYear() !== new Date().getFullYear()) opts.year = 'numeric';
+  return d.toLocaleDateString(undefined, opts);
+}
+
 function renderMobileNoteCards(notes) {
   const list = document.getElementById('mobile-notes-list');
   if (!list) return;
 
-  const sorted = [...notes].sort((a, b) => {
-    if (a.mtime && b.mtime) return b.mtime - a.mtime;
-    return 0;
-  });
+  const mode = getMobileSort();
+  const sorted = [...notes].sort((a, b) =>
+    mode === 'az'
+      ? a.title.localeCompare(b.title, undefined, { sensitivity: 'base' })
+      : (b.created || 0) - (a.created || 0)
+  );
 
   if (sorted.length === 0) {
     list.innerHTML = '<div style="color:var(--text-dim);font-size:13px;padding:8px 2px;">No notes found.</div>';
@@ -2160,12 +2206,19 @@ function renderMobileNoteCards(notes) {
   }
 
   list.innerHTML =
-    `<div class="m-section-label">All Notes (${sorted.length})</div>` +
+    `<div class="m-list-header">
+      <div class="m-section-label">All Notes (${sorted.length})</div>
+      <div class="m-sort-toggle" role="group" aria-label="Sort notes">
+        <button class="m-sort-btn${mode === 'newest' ? ' active' : ''}" data-sort="newest">Newest</button>
+        <button class="m-sort-btn${mode === 'az' ? ' active' : ''}" data-sort="az">A–Z</button>
+      </div>
+    </div>` +
     sorted.map(note =>
       `<div class="mobile-note-card" data-slug="${escHtml(note.slug)}">
         <span class="mnc-icon">📄</span>
         <div class="mnc-body">
           <div class="mnc-title">${escHtml(note.title)}</div>
+          ${note.created ? `<div class="mnc-date">Added ${escHtml(formatAddedDate(note.created))}</div>` : ''}
           ${(note.tags && note.tags.length)
             ? `<div class="mnc-tags">${note.tags.slice(0, 3).map(t =>
                 `<span class="tag-chip" style="pointer-events:none">${escHtml(t)}</span>`
@@ -2178,6 +2231,13 @@ function renderMobileNoteCards(notes) {
 
   list.querySelectorAll('.mobile-note-card').forEach(el => {
     el.addEventListener('click', () => openNote(el.dataset.slug));
+  });
+
+  list.querySelectorAll('.m-sort-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      setMobileSort(btn.dataset.sort);
+      renderMobileNoteCards(notes);
+    });
   });
 }
 
