@@ -109,9 +109,16 @@ def health() -> dict:
 
 @app.get("/notes")
 def list_notes() -> list[dict]:
-    """Return a lightweight list of all notes (slug, title, tags)."""
+    """Return a lightweight list of all notes (slug, title, tags, mtime, created)."""
     return [
-        {"slug": slug, "title": note["title"], "tags": note["tags"]}
+        {
+            "slug": slug,
+            "title": note["title"],
+            "tags": note["tags"],
+            "mtime": note.get("mtime"),
+            # Older index.json files predate "created"; fall back to mtime
+            "created": note.get("created", note.get("mtime")),
+        }
         for slug, note in _index.items()
     ]
 
@@ -132,6 +139,7 @@ def get_note(slug: str) -> dict:
         "links": note["links"],
         "path": note["path"],
         "mtime": note.get("mtime"),
+        "created": note.get("created", note.get("mtime")),
     }
 
 

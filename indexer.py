@@ -101,7 +101,7 @@ def scan_vault(vault_path: Path) -> dict:
     Pass 1: Parse every file, collect slugs, titles, aliases, raw wikilinks.
     Pass 2: Resolve raw wikilinks to slugs using the collected maps.
 
-    Returns: { slug → { title, tags, aliases, body, links, path, mtime } }
+    Returns: { slug → { title, tags, aliases, body, links, path, mtime, created } }
     """
     md_files = list(vault_path.rglob("*.md"))
 
@@ -131,7 +131,11 @@ def scan_vault(vault_path: Path) -> dict:
         tags = normalize_tags(meta.get("tags"))
         aliases = normalize_aliases(meta.get("aliases"))
         date = str(meta.get("date", "")) or ""
-        mtime = os.path.getmtime(filepath)
+        stat = os.stat(filepath)
+        mtime = stat.st_mtime
+        # st_birthtime (macOS/BSD) is when the file was first added to the vault;
+        # fall back to mtime on platforms that don't track creation time.
+        created = getattr(stat, "st_birthtime", mtime)
 
         raw_links = extract_wikilinks(body)
 
@@ -144,6 +148,7 @@ def scan_vault(vault_path: Path) -> dict:
             "raw_links": raw_links,
             "path": str(filepath),
             "mtime": mtime,
+            "created": created,
         }
 
         slug_map[slug] = slug
@@ -172,6 +177,7 @@ def scan_vault(vault_path: Path) -> dict:
             "links": resolved_links,
             "path": data["path"],
             "mtime": data["mtime"],
+            "created": data["created"],
         }
 
     return index
