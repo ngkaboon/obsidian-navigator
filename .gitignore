@@ -31,3 +31,6 @@ nohup.out
 .status
 .result
 daemon.log
+
+# Generated digest — contains summaries of your vault content
+digest_cache.json

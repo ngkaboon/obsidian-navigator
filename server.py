@@ -18,6 +18,8 @@ from fastapi.staticfiles import StaticFiles
 from fuzzywuzzy import fuzz
 from pydantic import BaseModel
 
+import digest
+
 # ---------------------------------------------------------------------------
 # App setup
 # ---------------------------------------------------------------------------
@@ -86,12 +88,13 @@ def _build_backlink_map() -> dict[str, list[str]]:
     """
     Return a mapping of slug → list of slugs that link TO that slug.
 
-    Uses the resolved `slug` field in each note's `links` list.
+    Uses the resolved `slug` field in each note's `links` list. A note that
+    links to the same target several times is listed only once.
     """
     backlinks: dict[str, list[str]] = {slug: [] for slug in _index}
     for source_slug, note in _index.items():
-        for link in note.get("links", []):
-            target = link.get("slug")
+        targets = {link.get("slug") for link in note.get("links", [])}
+        for target in targets:
             if target and target in _index:
                 backlinks.setdefault(target, []).append(source_slug)
     return backlinks
@@ -226,6 +229,64 @@ Answer the user's question using ONLY the provided note excerpts below.
 """
 
 
+def _resolve_api_key(request_key: str) -> str:
+    """Resolve API key: request body → env vars (Anthropic or OpenRouter)."""
+    api_key = (
+        request_key.strip()
+        or os.environ.get("ANTHROPIC_API_KEY", "")
+        or os.environ.get("OPENROUTER_API_KEY", "")
+    )
+    if not api_key:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "No API key provided. Supply an Anthropic or OpenRouter key "
+                "in the request body or via ANTHROPIC_API_KEY / OPENROUTER_API_KEY env var."
+            ),
+        )
+    return api_key
+
+
+def _llm_complete(api_key: str, system: str, user_message: str, max_tokens: int) -> str:
+    """Send one system + user message to Claude or OpenRouter and return the reply text."""
+    # OpenRouter keys start with "sk-or-"; route accordingly.
+    is_openrouter = api_key.startswith("sk-or-")
+
+    try:
+        if is_openrouter:
+            from openai import OpenAI
+            client_or = OpenAI(
+                base_url="https://openrouter.ai/api/v1",
+                api_key=api_key,
+            )
+            response = client_or.chat.completions.create(
+                model="deepseek/deepseek-chat",
+                max_tokens=max_tokens,
+                messages=[
+                    {"role": "system", "content": system},
+                    {"role": "user", "content": user_message},
+                ],
+            )
+            return response.choices[0].message.content
+        client = anthropic.Anthropic(api_key=api_key)
+        message = client.messages.create(
+            model="claude-haiku-4-5",
+            max_tokens=max_tokens,
+            system=system,
+            messages=[{"role": "user", "content": user_message}],
+        )
+        return message.content[0].text
+    except anthropic.AuthenticationError:
+        raise HTTPException(status_code=401, detail="Invalid Anthropic API key.")
+    except anthropic.APIError as exc:
+        raise HTTPException(status_code=502, detail=f"Claude API error: {exc}")
+    except Exception as exc:
+        from openai import AuthenticationError as OpenAIAuthError
+        if isinstance(exc, OpenAIAuthError):
+            raise HTTPException(status_code=401, detail="Invalid OpenRouter API key.")
+        raise HTTPException(status_code=502, detail=f"LLM API error: {exc}")
+
+
 class QueryRequest(BaseModel):
     question: str
     api_key: str = ""
@@ -253,20 +314,7 @@ def rag_query(request: QueryRequest) -> dict:
             ),
         )
 
-    # Resolve API key: request body → env vars (Anthropic or OpenRouter).
-    api_key = (
-        request.api_key.strip()
-        or os.environ.get("ANTHROPIC_API_KEY", "")
-        or os.environ.get("OPENROUTER_API_KEY", "")
-    )
-    if not api_key:
-        raise HTTPException(
-            status_code=400,
-            detail=(
-                "No API key provided. Supply an Anthropic or OpenRouter key "
-                "in the request body or via ANTHROPIC_API_KEY / OPENROUTER_API_KEY env var."
-            ),
-        )
+    api_key = _resolve_api_key(request.api_key)
 
     # Lazy import so the server starts even if rag deps are missing.
     try:
@@ -306,43 +354,7 @@ def rag_query(request: QueryRequest) -> dict:
         f"\n\n---\n\nMy question: {request.question}"
     )
 
-    # OpenRouter keys start with "sk-or-"; route accordingly.
-    is_openrouter = api_key.startswith("sk-or-")
-
-    try:
-        if is_openrouter:
-            from openai import OpenAI
-            client_or = OpenAI(
-                base_url="https://openrouter.ai/api/v1",
-                api_key=api_key,
-            )
-            response = client_or.chat.completions.create(
-                model="deepseek/deepseek-chat",
-                max_tokens=1024,
-                messages=[
-                    {"role": "system", "content": _RAG_SYSTEM_PROMPT},
-                    {"role": "user", "content": user_message},
-                ],
-            )
-            answer = response.choices[0].message.content
-        else:
-            client = anthropic.Anthropic(api_key=api_key)
-            message = client.messages.create(
-                model="claude-haiku-4-5",
-                max_tokens=1024,
-                system=_RAG_SYSTEM_PROMPT,
-                messages=[{"role": "user", "content": user_message}],
-            )
-            answer = message.content[0].text
-    except anthropic.AuthenticationError:
-        raise HTTPException(status_code=401, detail="Invalid Anthropic API key.")
-    except anthropic.APIError as exc:
-        raise HTTPException(status_code=502, detail=f"Claude API error: {exc}")
-    except Exception as exc:
-        from openai import AuthenticationError as OpenAIAuthError
-        if isinstance(exc, OpenAIAuthError):
-            raise HTTPException(status_code=401, detail="Invalid OpenRouter API key.")
-        raise HTTPException(status_code=502, detail=f"LLM API error: {exc}")
+    answer = _llm_complete(api_key, _RAG_SYSTEM_PROMPT, user_message, max_tokens=1024)
 
     # Deduplicate sources (multiple chunks from the same note).
     seen: set[str] = set()
@@ -358,3 +370,60 @@ def rag_query(request: QueryRequest) -> dict:
             })
 
     return {"answer": answer, "sources": sources}
+
+
+# ---------------------------------------------------------------------------
+# Digest: catch-up summary of the most recently updated wiki pages
+# ---------------------------------------------------------------------------
+
+class DigestRequest(BaseModel):
+    api_key: str = ""
+
+
+@app.get("/digest")
+def get_digest() -> dict:
+    """
+    Return the cached digest without calling the LLM.
+
+    Returns:
+        { "digest": {...} | null, "stale": bool }
+    `stale` is true when the wiki has changed since the digest was generated.
+    """
+    cached = digest.load_cache()
+    current_key = digest.cache_key(digest.select_pages(_index))
+    return {
+        "digest": cached,
+        "stale": cached is None or cached.get("key") != current_key,
+    }
+
+
+@app.post("/digest")
+def generate_digest(request: DigestRequest) -> dict:
+    """
+    Generate a fresh digest of the most recently updated wiki pages and cache it.
+
+    Accepts:
+        { "api_key": "..." }
+
+    Returns:
+        { "digest": { generated_at, key, overview, items: [...] }, "stale": false }
+    """
+    pages = digest.select_pages(_index)
+    if not pages:
+        raise HTTPException(status_code=404, detail="No wiki pages found in the vault.")
+
+    api_key = _resolve_api_key(request.api_key)
+    reply_text = _llm_complete(
+        api_key,
+        digest.DIGEST_SYSTEM_PROMPT,
+        digest.build_prompt(pages, _index),
+        max_tokens=4096,
+    )
+    try:
+        reply = digest.parse_response(reply_text)
+    except ValueError as exc:
+        raise HTTPException(status_code=502, detail=f"Could not read digest from LLM: {exc}")
+
+    result = digest.assemble(pages, reply)
+    digest.save_cache(result)
+    return {"digest": result, "stale": False}

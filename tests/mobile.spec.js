@@ -130,3 +130,59 @@ test('mobile sort toggle switches between newest and A–Z', async ({ page }) =>
   await page.waitForSelector('.mobile-note-card', { timeout: 5000 });
   await expect(page.locator('.m-sort-btn[data-sort="az"]')).toHaveClass(/active/);
 });
+
+const FAKE_DIGEST = {
+  stale: true,
+  digest: {
+    generated_at: 1790000000,
+    key: 'test',
+    overview: 'Themes across the batch.',
+    items: [
+      { slug: 'container-security', title: 'Container Security', status: 'new',
+        summary: 'Containers share one kernel.', sources: [{ slug: 'x', title: 'Some clipping' }] },
+      { slug: 'research-productivity', title: 'Research Productivity', status: 'updated',
+        summary: 'Hamming habits under strain.', sources: [] },
+    ],
+  },
+};
+
+test('digest tab renders cached digest with badges and stale banner', async ({ page }) => {
+  await page.route('**/digest', route => route.fulfill({ json: FAKE_DIGEST }));
+  await page.setViewportSize(MOBILE);
+  await page.goto(BASE);
+  await page.locator('#m-tab-digest').click();
+  await expect(page.locator('#mobile-digest-view')).toBeVisible();
+  await expect(page.locator('#mobile-notes-view')).not.toBeVisible();
+  await expect(page.locator('#m-digest-body .digest-item')).toHaveCount(2);
+  await expect(page.locator('#m-digest-body .digest-badge.new')).toHaveCount(1);
+  await expect(page.locator('#m-digest-body .digest-badge.updated')).toHaveCount(1);
+  await expect(page.locator('#m-digest-body .digest-stale')).toBeVisible();
+  await expect(page.locator('#m-digest-body .digest-overview')).toHaveText('Themes across the batch.');
+});
+
+test('digest tab offers to generate when no digest exists', async ({ page }) => {
+  await page.route('**/digest', route => route.fulfill({ json: { digest: null, stale: true } }));
+  await page.setViewportSize(MOBILE);
+  await page.goto(BASE);
+  await page.locator('#m-tab-digest').click();
+  await expect(page.locator('#m-digest-body .digest-generate-btn')).toBeVisible();
+});
+
+test('tapping a digest title opens the note', async ({ page }) => {
+  await page.route('**/digest', route => route.fulfill({ json: FAKE_DIGEST }));
+  await page.setViewportSize(MOBILE);
+  await page.goto(BASE);
+  await page.locator('#m-tab-digest').click();
+  await page.locator('.digest-item-title').first().click();
+  await expect(page.locator('#mobile-note-detail')).toHaveClass(/open/, { timeout: 3000 });
+  await expect(page.locator('#mobile-detail-title')).toHaveText('Container Security');
+});
+
+test('header digest button opens the Digest tab on mobile', async ({ page }) => {
+  await page.route('**/digest', route => route.fulfill({ json: FAKE_DIGEST }));
+  await page.setViewportSize(MOBILE);
+  await page.goto(BASE);
+  await page.locator('#digest-btn').click();
+  await expect(page.locator('#mobile-digest-view')).toBeVisible();
+  await expect(page.locator('#m-tab-digest')).toHaveClass(/active/);
+});

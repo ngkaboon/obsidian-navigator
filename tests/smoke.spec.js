@@ -38,3 +38,28 @@ test('opening a note renders content', async ({ page }) => {
   await expect(page.locator('#note-container')).toBeVisible({ timeout: 3000 });
   await expect(page.locator('#note-title')).not.toBeEmpty();
 });
+
+test('backlinks list each linking note only once', async ({ request }) => {
+  const notes = await (await request.get(`${BASE}/notes`)).json();
+  for (const note of notes) {
+    const res = await request.get(`${BASE}/backlinks/${encodeURIComponent(note.slug)}`);
+    const slugs = (await res.json()).map(b => b.slug);
+    expect(new Set(slugs).size, `duplicate backlinks for ${note.slug}`).toBe(slugs.length);
+  }
+});
+
+test('GET /digest returns digest-or-null and a stale flag', async ({ request }) => {
+  const body = await (await request.get(`${BASE}/digest`)).json();
+  expect(body).toHaveProperty('digest');
+  expect(typeof body.stale).toBe('boolean');
+});
+
+test('desktop digest button shows digest in browse panel', async ({ page }) => {
+  await page.route('**/digest', route => route.fulfill({ json: { digest: null, stale: true } }));
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await page.goto(BASE);
+  await page.locator('#digest-btn').click();
+  await expect(page.locator('#note-title')).toHaveText('📰 Digest');
+  await expect(page.locator('#note-body .digest-generate-btn')).toBeVisible();
+  await expect(page.locator('#backlinks-section')).toBeHidden();
+});

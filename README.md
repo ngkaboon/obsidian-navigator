@@ -68,6 +68,7 @@ Add it as a home screen icon in Safari: Share → Add to Home Screen.
 | `server.py` | FastAPI backend, runs on port 8000 |
 | `indexer.py` | Crawls vault, parses wikilinks and frontmatter, writes `index.json` |
 | `rag.py` | Embeds note chunks into ChromaDB, exposes `query()` for semantic search |
+| `digest.py` | Builds the 📰 Digest: LLM catch-up of the 10 most recently updated `wiki/` pages, cached in `digest_cache.json` |
 | `frontend/index.html` | Single-file UI — responsive, works on desktop and mobile |
 | `setup.sh` | First-time setup and launch script |
 | `refresh.sh` | Re-indexes vault and rebuilds vector index |
